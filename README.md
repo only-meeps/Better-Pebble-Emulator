@@ -1,8 +1,8 @@
-#Better Pebble Emulator
+# **Better Pebble Emulator**
 
 By Only-Meeps
 
-**Features**
+## **Features**
 
 -faketime built in (easy to change the time for pebble watchfaces)
 
