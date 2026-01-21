@@ -1,7 +1,43 @@
 #!/bin/bash
 
-mkdir -p /var/tmp/pblemu/
-echo "EMULATOR=emery" > /var/tmp/pblemu/pblemu.txt
+
+INSTALL_DIR="$HOME/.local/bin"
+SCRIPT_NAME="pebbleEmu" 
+
+if [[ "$(realpath "$0")" != "$INSTALL_DIR/$SCRIPT_NAME" ]]; then
+    read -p "This script is not installed. Would you like to add it to your commands? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+
+        mkdir -p "$INSTALL_DIR"
+        
+        cp "$0" "$INSTALL_DIR/$SCRIPT_NAME"
+        
+        chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
+        
+        echo "Successfully installed! You can now run '$SCRIPT_NAME' from anywhere"
+        echo "You may need to restart your terminal or run 'source ~/.bashrc' to apply the changes!"
+        echo "use pebbleEmu -h to get usage!"
+        exit 0
+    fi
+fi
+
+if command -v pebble >/dev/null 2>&1; then
+    echo pebble installation verified
+else
+    echo pebble installation not verified, please install it
+    echo starting installation process...
+    echo installing dependecies...
+    sudo apt install python3-pip python3-venv nodejs npm libsdl1.2debian libfdt1
+    echo installing pebble-tool
+    uv tool install pebble-tool --python 3.13
+    echo installing recent SDK...
+    pebble sdk install latest
+    echo installation finished
+fi
+
+mkdir -p /var/tmp/pblEmu/
+echo "EMULATOR=emery" > /var/tmp/pblEmu/pblEmu.txt
 CLEANBUILD=false
 FAKETIME=false
 DEBUG=false
@@ -23,7 +59,7 @@ case "$1" in
     ;;
     -e|--emulator)
     shift
-    echo "EMULATOR=$1" > /var/tmp/pblemu/pblemu.txt
+    echo "EMULATOR=$1" > /var/tmp/pblEmu/pblEmu.txt
     shift
     ;;
     -d|--debug)
@@ -56,7 +92,7 @@ case "$1" in
     ;;
     esac
 done
-source /var/tmp/pblemu/pblemu.txt
+source /var/tmp/pblEmu/pblEmu.txt
 EMULATOR=$EMULATOR
 echo starting...
 PROJECTNAME=$PWD
