@@ -19,11 +19,16 @@ if [[ "$(realpath "$0")" != "$INSTALL_DIR/$SCRIPT_NAME" ]]; then
         echo "You may need to restart your terminal or run 'source ~/.bashrc' to apply the changes!"
         echo "use pebbleEmu -h to get usage!"
         exit 0
+    elif [[ $REPLY =~ ^[Nn]$ ]]; then
+        echo "Cancled by user"
+        exit 0
+    else
+        echo "Please try again"
     fi
 fi
 
 if command -v pebble >/dev/null 2>&1; then
-    echo pebble installation verified
+    echo pebble SDK installation verified
 else
     echo pebble installation not verified, please install it
     echo starting installation process...
@@ -96,13 +101,23 @@ source /var/tmp/pblEmu/pblEmu.txt
 EMULATOR=$EMULATOR
 echo starting...
 PROJECTNAME=$PWD
-echo finding project $PROJECTNAME...
-if cd $PROJECTNAME > /dev/null 2>&1; then
-    echo found project $PROJECTNAME
-
-else
-    echo ERR: unable to find project $PROJECTNAME
+if cd ! $PROJECTNAME > /dev/null 2>&1; then
+    echo ERR: unable to find dir: $PROJECTNAME
     echo exiting command...
+    exit 1
+fi
+PACKAGEJSONLOCATION="$PROJECTNAME/package.json"
+if [ -f "$PACKAGEJSONLOCATION" ]; then
+    if grep "pebble" $PACKAGEJSONLOCATION; then
+        echo pebble build folder verified!
+    else
+        echo ERR: this folder is not a build folder
+        echo please try again in the build folder
+        exit 1
+    fi
+else
+    echo ERR: this folder is not a build folder
+    echo please try again in the build folder
     exit 1
 fi
 if [ -z "$EMULATOR" ]; then
