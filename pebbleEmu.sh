@@ -40,6 +40,12 @@ else
     echo installing dependecies...
     sudo apt install python3-pip python3-venv nodejs npm libsdl1.2debian libfdt1
     echo installing pebble-tool
+    if command -v uv &> /dev/null; then
+        echo installing UV...
+        wget -qO- https://astral.sh/uv/install.sh | sh
+        echo please restart your terminal to complete the installation of UV
+        exit 0
+    fi
     uv tool install pebble-tool --python 3.13
     echo installing recent SDK...
     pebble sdk install latest
