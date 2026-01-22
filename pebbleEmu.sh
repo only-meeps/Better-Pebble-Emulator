@@ -26,7 +26,12 @@ if [[ "$(realpath "$0")" != "$INSTALL_DIR/$SCRIPT_NAME" ]]; then
         echo "Please try again"
     fi
 fi
-
+if command -v faketime &> /dev/null; then
+    echo faketime installation verified
+else
+    sudo apt install faketime
+    echo installation finished
+fi
 if command -v pebble >/dev/null 2>&1; then
     echo pebble SDK installation verified
 else
