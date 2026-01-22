@@ -12,8 +12,9 @@ By Only-Meeps
 
 ## **Installation**
 
-1. Run the script from anywhere on your system
-2. type y
-3. follow prompts to install faketime and the pebble SDK (if you have not yet)
-4. Yay, your done!
+1. Download the script from the releases page
+2. Run the script from anywhere on your system
+3. Type y
+4. Tollow prompts to install faketime and the pebble SDK (if you have not yet)
+5. Yay, your done!
 
