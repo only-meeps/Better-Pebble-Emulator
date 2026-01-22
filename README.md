@@ -2,7 +2,7 @@
 
 By Only-Meeps
 
-**UBUNTU PLATFORMS ONLY**
+**UBUNTU AND DEBIAN PLATFORMS ONLY**
 
 ## **Features**
 
