@@ -20,7 +20,7 @@ if [[ "$(realpath "$0")" != "$INSTALL_DIR/$SCRIPT_NAME" ]]; then
         echo "use pebbleEmu -h to get usage!"
         exit 0
     elif [[ $REPLY =~ ^[Nn]$ ]]; then
-        echo "Cancled by user"
+        echo "Canceled by user"
         exit 0
     else
         echo "Please try again"
@@ -45,7 +45,11 @@ mkdir -p /var/tmp/pblEmu/
 echo "EMULATOR=emery" > /var/tmp/pblEmu/pblEmu.txt
 CLEANBUILD=false
 FAKETIME=false
+SFAKETIME=false
 DEBUG=false
+FAKETIMEDT=NULL
+KEEPEMULATOR=false
+LOGGING=false
 while [[ $# -gt 0 ]]; do
 case "$1" in 
     -c|--clean)
@@ -58,9 +62,6 @@ case "$1" in
     shift
     FAKETIMEDT=$1
     shift
-    FAKETIMET=$1
-    shift
-    echo fake time confirmed $FAKETIMEDT $FAKETIMET
     ;;
     -e|--emulator)
     shift
@@ -71,15 +72,33 @@ case "$1" in
     DEBUG=true
     shift
     ;;
+    -k|--keep)
+    KEEPEMULATOR=true
+    shift
+    ;;
+    -sf|--savefaketime)
+    SFAKETIME=true
+    shift
+    SFAKETIMEDT=$1
+    shift
+    echo saved fake time $SFAKETIMEDT
+    ;;
+    -l|--logs)
+    LOGGING=true
+    shift
+    ;;
     -h|--help)
-    echo 'COMMAND STRUCTURE:'
-    echo 'pebble_emu [OPTIONS]'
+    echo 'USAGE:'
+    echo 'pebbleEmu [OPTIONS]'
     echo 'OPTIONS:'
+    echo '[-k or --keep] Keeps the current emulator, instead of closing it, like it normally does'
     echo '[-c or --clean] Does a clean build'
-    echo '[-f or --faketime] Fakes a specific time for the emulator'
+    echo '[-f or --faketime] Fakes a specific time for the emulator. Format is "YYYY-MM-DD HH:MM:SS"'
+    echo '[-sf or --savefaketime] Saves a faketime. Used when -f is called, but no time is specified. Format is "YYYY-MM-DD HH:MM:SS"'
     echo '[-h or --help] Help command'
     echo '[-e or --emulator] Sets the emulator (default is emery)'
-    echo '[-d or --debug] Shows the debug logs of all commands'
+    echo '[-d or --debug] Provides complete debug'
+    echo '[-l or --logs] Activates pebbles logging feature'
     echo 'AVAILABLE EMULATORS:'
     echo 'aplite (Original Pebble)'
     echo 'basalt (Pebble Time)'
@@ -97,6 +116,18 @@ case "$1" in
     ;;
     esac
 done
+if $SFAKETIME; then
+    mkdir -p /var/tmp/pblEmu/
+    echo "FAKETIMESAVED=$SFAKETIMEDT" > /var/tmp/pblEmu/pblEmu.txt
+    exit 0
+fi
+if [ "$FAKETIME" ]; then
+    if [ "$FAKETIMEDT" != "NULL" ]; then
+        source /var/tmp/pblEmu/pblEmu.txt
+        FAKETIMEDT=$FAKETIMESAVED
+    fi
+fi
+
 source /var/tmp/pblEmu/pblEmu.txt
 EMULATOR=$EMULATOR
 echo starting...
@@ -108,7 +139,7 @@ if cd ! $PROJECTNAME > /dev/null 2>&1; then
 fi
 PACKAGEJSONLOCATION="$PROJECTNAME/package.json"
 if [ -f "$PACKAGEJSONLOCATION" ]; then
-    if grep "pebble" $PACKAGEJSONLOCATION; then
+    if grep "pebble" $PACKAGEJSONLOCATION > /dev/null 2>&1; then
         echo pebble build folder verified!
     else
         echo ERR: this folder is not a build folder
@@ -127,9 +158,14 @@ else
     EMULATOR=${EMULATOR,,}
     echo opening with emulator $EMULATOR
 fi
-echo closing current emulator...
-pebble kill
-echo closed
+if $KEEPEMULATOR; then
+    echo keeping emulator open
+else
+    echo closing current emulator...
+    pebble kill
+    echo closed
+fi
+
 if $CLEANBUILD; then
     echo cleaning build...
     if $DEBUG; then
@@ -151,22 +187,18 @@ fi
 echo built
 echo starting...
 if $FAKETIME; then
-    if $DEBUG; then
-        pkill -f qemu-system-arm
+
+    RTC_TIME=$(date -d "$FAKETIMEDT" +%Y-%m-%dT%H:%M:%S)
+    if $LOGGING; then
+        faketime $RTC_TIME pebble install --emulator $EMULATOR --logs
     else
-        pkill -f qemu-system-arm 2>/dev/null
+        faketime $RTC_TIME pebble install --emulator $EMULATOR
     fi
-
-    RTC_TIME=$(date -d "$FAKETIMEDT $FAKETIMET" +%Y-%m-%dT%H:%M:%S)
-    echo "Launching QEMU directly with RTC: $RTC_TIME"
-    ~/.pebble-sdk/SDKs/current/sdk-core/pebble/common/qemu/qemu-system-arm \
-        -rtc base="$RTC_TIME" \
-        -f $EMULATOR & 
-
-    echo "Waiting for hardware boot..."
-    sleep 10
-    pebble install
 else
-    pebble install --emulator $EMULATOR
+    if $LOGGING; then
+        pebble install --emulator $EMULATOR --logs
+    else
+        pebble install --emulator $EMULATOR
+    fi
 fi
 echo finished
